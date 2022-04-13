@@ -1,6 +1,6 @@
 # Chimera Chat
 <p align="center">
-  <img src="https://github.com/joaopedrolourencoaffonso/Chimera-chat/blob/main/figuras_chimera/chimera_chat_3.PNG?raw=true" alt="Figura 2 - Página principal da Aplicação">
+  <img src="https://github.com/joaopedrolourencoaffonso/Chimera-chat/blob/main/figuras_chimera/chimera_chat_3.png?raw=true" alt="Figura 2 - Página principal da Aplicação">
 </p>
 <p align="center">
 	Figura 1 - Logo do Chimera, feito com plataforma <a href="https://www.logomaker.com/pt/comece-agora">logomaker</a>
@@ -187,7 +187,7 @@ p2p_.join();
 É importante notar que esses módulos não trocam informações diretamente, mas sim, por intermédio de duas bases de dados: ```vizinhos.db``` e ```chats.db```, conforme a figura 2:
 
 <p align="center">
-  <img width="600" height="300" src="https://github.com/joaopedrolourencoaffonso/Chimera-chat/blob/667e02dfab344ab3fc7473377bb9a24116908348/figuras_chimera/funcionamento-geral.png?raw=true" alt="Figura 2 - Esquema de interação entre os diferentes processos e bases de dados.">
+  <img width="600" height="300" src="https://github.com/joaopedrolourencoaffonso/Chimera-chat/blob/main/figuras_chimera/funcionamento-geral.png?raw=true" alt="Figura 2 - Esquema de interação entre os diferentes processos e bases de dados.">
 </p>
 <p align="center">
 	Figura 2 - Esquema de interação entre os diferentes processos e bases de dados.
@@ -196,13 +196,13 @@ p2p_.join();
 ### Interface Gráfica
 Conforme explicado anteriormente, o objetivo do presente projeto é criar uma "prova de conceito" e não uma aplicação comercial, sendo assim, foi empregada uma abordagem minimalista para a implementação da mesma, conforme exposto nas figura 3 e 4:
 <p align="center">
-  <img width="600" height="300" src="https://github.com/joaopedrolourencoaffonso/Chimera-chat/blob/main/figuras_chimera/tela-de-inicio-2.PNG?raw=true" alt="Figura 3 - Página principal da Aplicação">
+  <img width="600" height="300" src="https://github.com/joaopedrolourencoaffonso/Chimera-chat/blob/main/figuras_chimera/tela-de-inicio.PNG?raw=true" alt="Figura 3 - Página principal da Aplicação">
 </p>
 <p align="center">
 	Figura 3 - Página principal da Aplicação
 </p>
 <p align="center">
-  <img width="600" height="300" src="https://github.com/joaopedrolourencoaffonso/Chimera-chat/blob/main/figuras_chimera/exemplo-de-dialogo-2.PNG?raw=true" alt="Figura 4 - Página de diálogo">
+  <img width="600" height="300" src="https://github.com/joaopedrolourencoaffonso/Chimera-chat/blob/main/figuras_chimera/exemplo-de-dialogo.PNG?raw=true" alt="Figura 4 - Página de diálogo">
 </p>
 <p align="center">
 	Figura 4 - Página de diálogo
