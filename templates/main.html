@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Chimera chat!</title>
+    <link rel="shortcut icon" href="{{ url_for('static', filename='chimera_logo.png') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+
+    <style>
+        html {
+	background:url({{ url_for('static',filename='background-2.jpg') }}) no-repeat center center fixed; 
+	-webkit-background-size: cover;
+	-moz-background-size: cover;
+	-o-background-size: cover;
+	background-size: cover;
+	}
+    </style>
+  </head>
+  <body>
+    <h1>Bem vindo!</h1>
+    <div class="dialogs">
+    <table style="width:100%">
+	<tr style="text-align: center">
+	  <td>Nome</td>
+	  <td>Última Mensagem</td>
+	</tr>
+	{% for dialog in dialogs %}
+		<tr><td style="text-align: center"><a href='http://localhost:5000/conversa/{{ dialog[1] }}'>{{ dialog[0] }}</a></td><td>{{ dialog[2]|safe }}</td></tr>
+	{% else %}
+		<div>No posts available</div>
+	{% endfor %}
+	
+    </table>
+    </div>
+    <br>
+    <div class="novo_dialogo">
+	<form action = "http://localhost:5000/nova_conversa" method="POST">
+	    <div><label>Número (sem o zero): <input type="text" name="number"></label></div>
+            <p>Ex: 5521998654321</p>
+	    <!--<div><label>Mensagem (não pode ser arquivo): <input type="text" name="msg"></label></div>-->
+            <input type="submit" value="Submit">
+	</form>
+    </div>
+
+  </body>
+</html> 

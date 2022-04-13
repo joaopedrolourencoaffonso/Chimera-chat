@@ -1,0 +1,99 @@
+<!doctype html>
+<html>
+  <head>
+    <title>{{ dialog_name }}</title>
+    <link rel="shortcut icon" href="{{ url_for('static', filename='chimera_logo.png') }}">
+
+    <style>
+        html {
+	background:url({{ url_for('static',filename='background-5.jpg') }}) no-repeat center center fixed; 
+	-webkit-background-size: cover;
+	-moz-background-size: cover;
+	-o-background-size: cover;
+	background-size: cover;
+	}
+
+        .boxed {
+          border: 1px solid green ;
+	  background-color: #99ff99;
+	  line-height: 2.5em;
+        }
+
+	.container {
+          border: 2px solid #dedede;
+          background-color: #f1f1f1;
+          border-radius: 5px;
+          padding: 5px;
+          margin: 10px 0;
+	  min-height: 10px;
+	  overflow: hidden;
+	  font-family: Arial, Helvetica, sans-serif;
+         }
+
+	.time {
+	  float: left;
+	  color: #003366;
+	  font-size: 10px;
+	}
+
+	.mensagens {
+	  height: 400px;
+	  overflow: hidden;
+	  overflow-y: scroll;
+	}
+	.body {
+	  overflow: hidden;
+	  height: 550px;
+	}
+    </style>
+  </head>
+  <body>
+  <h1 style="font-size: 30px;font-family: "Serif","Garamond",monospace;">{{ dialog_name }}</h1>
+
+  <div id="mensagens" class="mensagens">
+     <!--<ul></ul>-->
+  </div>
+
+  Mensagem: <input type="text" id="myText" value="Marco!">
+
+  <p>Escreva suas mensagens acima!</p>
+
+  <button onclick="myFunction()">Enviar</button>
+  <button onclick="FileFunction()">Enviar arquivo</button>
+
+  <p id="demo"></p>
+
+  <script>
+  let socket = new WebSocket('ws://localhost:5000/ws/{{ dialog_id }}');
+  function myFunction() {
+    var x = document.getElementById("myText").value;
+    if (x == "" || x == " ") {
+        document.getElementById("demo").innerHTML = "Mensagens não podem ser vazias!";
+    } else if (x.length > 500) {
+        document.getElementById("demo").innerHTML = "Mensagens não podem ter mais do que 500 caracteres, incluindo espaços vazios";
+    } else {
+        socket.send(x);
+        document.getElementById("demo").innerHTML = x;
+    }
+  };
+
+  function FileFunction() {
+    var x = document.getElementById("myText").value;
+    var y = "*&%$#@!" + x
+    if (x == "" || x == " ") {
+        document.getElementById("demo").innerHTML = "Nome de arquivo não pode ser vazio";
+    } else {
+        socket.send(y);
+        document.getElementById("demo").innerHTML = x;
+    }
+  };
+
+  socket.onmessage = function(event) {
+    var temp = "<div class='container'>" + event.data + "</div>";
+    //var temp = event.data;
+    document.getElementById("mensagens").innerHTML += temp;
+  };
+  </script>
+
+  </body>
+</html>
