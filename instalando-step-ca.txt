@@ -1,0 +1,34 @@
+joao@joao-VirtualBox:~$ step ca init
+✔ Deployment Type: Standalone
+What would you like to name your new PKI?
+✔ (e.g. Smallstep): exemplo_CA                                         # nome_da_sua_Autoridade_Certificadora
+What DNS names or IP addresses would you like to add to your new CA?
+✔ (e.g. ca.smallstep.com[,1.1.1.1,etc.]): seu_nome.com.br              # endereço IP da sua CA
+What IP and port will your new CA bind to?
+✔ (e.g. :443 or 127.0.0.1:443): 0.0.0.0:8443                           # endereço IP da sua CA
+What would you like to name the CA's first provisioner?
+✔ (e.g. you@smallstep.com): nome@example.com                           # provedor de identidade criado durante instalação
+Choose a password for your CA keys and first provisioner.
+✔ [leave empty and we'll generate one]: senha                          # senha para criptografar a chave privada do provedor de identidade
+
+Generating root certificate... done!
+Generating intermediate certificate... done!
+
+✔ Root certificate: /home/user/.step/certs/root_ca.crt
+✔ Root private key: /home/user/.step/secrets/root_ca_key
+✔ Root fingerprint: b8d6f9e23d3hjkb7f0891c4f0erfe84350fb5ee31514c733a7617435c35b1395
+✔ Intermediate certificate: /home/user/.step/certs/intermediate_ca.crt
+✔ Intermediate private key: /home/user/.step/secrets/intermediate_ca_key
+✔ Database folder: /home/user/.step/db
+✔ Default configuration: /home/user/.step/config/defaults.json
+✔ Certificate Authority configuration: /home/user/.step/config/ca.json
+
+Your PKI is ready to go. To generate certificates for individual services see 'step help ca'.
+
+FEEDBACK 😍 🍻
+  The step utility is not instrumented for usage statistics. It does not phone
+  home. But your feedback is extremely valuable. Any information you can provide
+  regarding how you’re using `step` helps. Please send us a sentence or two,
+  good or bad at feedback@smallstep.com or join GitHub Discussions
+  https://github.com/smallstep/certificates/discussions and our Discord 
+  https://u.step.sm/discord.
