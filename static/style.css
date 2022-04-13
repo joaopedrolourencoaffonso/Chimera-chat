@@ -1,0 +1,8 @@
+table, th, td {
+  border: 1px solid black;
+  table-layout: fixed;
+}
+
+.nome_tabela {
+  width: 20px;  
+}
