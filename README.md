@@ -1,6 +1,6 @@
 # Chimera Chat
 <p align="center">
-  <img src="https://github.com/joaopedrolourencoaffonso/Chimera-chat/blob/main/figuras_chimera/chimera_chat_3.png?raw=true" alt="Figura 2 - Página principal da Aplicação" style="width:550px;height:574px;">
+  <img src="https://github.com/joaopedrolourencoaffonso/Chimera-chat/blob/main/figuras_chimera/chimera_chat_3.png?raw=true" alt="Figura 2 - Página principal da Aplicação" style="width:184px;height:192px;">
 </p>
 <p align="center">
 	Figura 1 - Logo do Chimera
