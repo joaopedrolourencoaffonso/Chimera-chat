@@ -1,11 +1,10 @@
 # Chimera Chat
 <p align="center">
-  <img src="https://github.com/joaopedrolourencoaffonso/Chimera-chat/blob/main/figuras_chimera/chimera_chat_3.png?raw=true" alt="Figura 2 - Página principal da Aplicação">
+  <img src="https://github.com/joaopedrolourencoaffonso/Chimera-chat/blob/main/figuras_chimera/chimera_chat_3.png?raw=true" alt="Figura 2 - Página principal da Aplicação" style="width:480px;height:360px;">
 </p>
 <p align="center">
-	Figura 1 - Logo do Chimera, feito com plataforma <a href="https://www.logomaker.com/pt/comece-agora">logomaker</a>
+	Figura 1 - Logo do Chimera
 </p>
-
 O Chimera chat é uma aplicação de chat híbrida entre os modelos cliente-servidor e P2P, sendo capaz de identificar quando o destinatário de uma mensagem está na mesma rede LAN que o remetente e assim estabelecer comunicação direta e segura com o destinatário, dispensando o apoio de um servidor central. A aplicação conta ainda com uma infraestrutura de chave pública (PKI) para fornecer certificados SSL aos usuários.
 
 ## Proposta
