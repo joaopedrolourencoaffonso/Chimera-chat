@@ -425,3 +425,7 @@ Dessa forma, as vantagens da adoção de um sistema de mensageiro híbrido entre
 
 Agradecemos a atenção.
 
+
+### Observações
+
+O Chimera é uma aplicação *protótipo* ainda em *desenvolvimento* com o propósito de ilustrar os benefícios de uma arquitetura híbrida entre os modelos cliente-servidor e P2P. Sendo assim, apesar de termos o objetivo de deixar o código o mais próximo de uma aplicação real possível, nem todas as funcionalidades do Telegram serão disponibilizadas. Caso o leitor deseje utilizar o Chimera como base para sua própria aplicação, é recomendável que o mesmo se atenha aos [termos de serviço](https://core.telegram.org/api/terms) do Telegram.
