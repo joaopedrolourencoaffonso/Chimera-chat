@@ -19,7 +19,7 @@ Chama-se para o fato de que apesar de ser possível utilizar o step-cli em uma [
 ### SSL
 Para a correta operação do ```chimera_identity.py``` são necessários pelo menos outros três arquivos:
 
-- ```ca_bundle.pem```: Bundle de certificados da autoridade certificadora. Pode ser obtido copiando e colando os certificiados da intermediate_ca e root_ca da step-ca.
+- ```ca_bundle.pem```: Bundle de certificados da autoridade certificadora. Pode ser obtido copiando e colando os certificados da intermediate_ca e root_ca da step-ca.
 - ```quart_key.pem```: Chave privada da API do provedor de identidade, **diferente** da chave utilizada para assinar os certificados, sendo utilizada para prover criptografia para as APIs. Pode ser obtida através do próprio comando ```step``` ou pelo OpenSSL.
 - ```quart_cert.pem```: Certificado SSL assinado pela step-ca e obtido a partir de CSR gerado a partir da ```quart_key.pem```.
 
@@ -123,4 +123,4 @@ Por fim, para revogar um certificado, o usuário precisa primeiro obter um token
 
 ## A Smallstep
 
-É necessário destacar que esse projeto não seria possível sem o [apoio](https://github.com/smallstep/certificates/discussions/734) da equipe da [Smallstep](https://smallstep.com/about/) companhia criadora da step-ca e step-cli. A ajuda deles foi fundamental para construção da aplicação assim como melhor compreensão de vários conceitos nem tão simples. Sendo assim, não seria possível encerrar uma discussão sobre o chimera_indtity sem citar a alta qualidade dos produtos e serviços da Smallstep sendo extremamente recomendável para projetos que busquem criar um ambiente de PKI saudável e organizado.
+É necessário destacar que esse projeto não seria possível sem o [apoio](https://github.com/smallstep/certificates/discussions/734) da equipe da [Smallstep](https://smallstep.com/about/) companhia criadora da step-ca e step-cli. A ajuda deles foi fundamental para construção da aplicação assim como melhor compreensão de vários conceitos nem tão simples. Sendo assim, não seria possível encerrar uma discussão sobre o chimera_indentity sem citar a alta qualidade dos produtos e serviços da Smallstep sendo extremamente recomendável para projetos que busquem criar um ambiente de PKI saudável e organizado.
