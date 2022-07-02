@@ -1,0 +1,10 @@
+api_id = 1234567;
+api_hash = "a12345678b9101c12d1efghijkl153d";
+mysql_host="localhost";
+mysql_user="registration";
+mysql_password="senha";
+mysql_database="registration";
+config_bind = ["0.0.0.0:8000"];
+config_certfile = "/home/caminho_para_seu_certificado/quart_crt.pem";
+config_keyfile = "/home/caminho_para_seu_certificado/quart_key.pem";
+config_ciphers = "ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-GCM-SHA256";
