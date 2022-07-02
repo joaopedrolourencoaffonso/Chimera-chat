@@ -791,7 +791,7 @@ def p2p_module(fim, lock, my_id):
 
             '''Não usamos o check_hostname pq ele é voltado para IP e acaba dando um erro'''
             context.options |= ssl.OP_NO_TLSv1 | ssl.OP_NO_TLSv1_1
-            context.set_ciphers('EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH')
+            context.set_ciphers('EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH:!SSLv3:!TLSv1')
 
             n = 0;
             results = [];
@@ -881,8 +881,8 @@ def p2p_module(fim, lock, my_id):
                 lock.release();
                 con.close();
 
-            '''Caso nenhuma mensagem seja recebida'''
             elif msg_recebida == "":
+                '''Caso nenhuma mensagem seja recebida'''
                 conn.close();
 
             else:
@@ -1248,4 +1248,3 @@ Atualizando base de dados, aguarde.''');
     quart_.join();
     telethon_.join();
     p2p_.join();
-
