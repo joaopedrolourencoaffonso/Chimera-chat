@@ -23,11 +23,11 @@ O principal objetivo deste projeto é servir como "proof of concept" da viabilid
 
 As funcionalidades de "canais" e supergrupos, por exemplo, são implementadas de maneira parcial, sendo possível o usuário iteragir com os mesmos, porém, arquivos partilhados por esses meios não são acessíveis, uma vez que são possíves vetores de Malware. Da mesma maneira, por padrão, quando o Chimera é iniciado pela primeira vez, ele faz o download das últimas 10 mensagens trocadas em cada diálogo do Telegram, sendo mensagens anteriores **inacessíveis**, uma vez que isso não apenas tornaria o tempo de instalação desnecessariamente demorado como também tornaria extremamente difícil a iteração com canais e supergrupos, que podem trocar milhares de mensagens por dia. Sendo assim, o Chimera é capaz de:
 
-- enviar mensagens pelo Telegram e armazená-las em uma base de dados SQLite.
-- receber mensagens pelo Telegram e armazená-las em uma base de dados SQLite.
+- enviar mensagens por cloud-chats do Telegram e armazená-las em uma base de dados SQLite.
+- receber mensagens pelo cloud-chats do Telegram e armazená-las em uma base de dados SQLite.
 - enviar mensagens por conexão em rede local e armazená-las em uma base de dados SQLite.
 - receber mensagens por conexão em rede local e armazená-las em uma base de dados SQLite.
-- Receber e enviar arquivos pelo Telegram, sendo que o caminho absoluto de cada arquivo armazenado na base de dados para acesso pelo usuário.
+- Receber e enviar arquivos por cloud-chats do Telegram, sendo que o caminho absoluto de cada arquivo armazenado na base de dados para acesso pelo usuário.
 - Receber e enviar arquivos por conexão em rede local, sendo que o caminho absoluto de cada arquivo armazenado na base de dados para acesso pelo usuário.
 - Encontrar outro usuário e começar um diálogo utilizando o número de celular registrado na agenda.
 - Fornecer uma interface gráfica para interação natural pelo usuário
