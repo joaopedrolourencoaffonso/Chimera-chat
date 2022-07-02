@@ -47,23 +47,26 @@ Em um diretório arbitrário, crie um arquivo denominado: ```variables.py``` e s
 
 ### Configurando o chimera_identity.py
 
-Finalizados os passos anteriores, basta agora acessar o arquivo ```chimera_identity.py``` e editar os seguintes campos:
+Para iniciar o chimera_identity.py é necessário fornecer a ele as credenciais necessárias para enviar mensagens pelo Telegram e interagir com a base de dados, para isso, é preciso criar um arquivo chamado ```chimera_config.py``` em um diretório arbitrário conforme o [exemplo](https://github.com/joaopedrolourencoaffonso/Chimera-chat/blob/main/Provedor_de_identidade/chimera_config.py) abaixo:
 
 ```python
-sys.path.insert(2, "/path_to_your_variables")#coloque o path para o diretório no qual foi salvo o arquivo variables.py
-...
-mydb = mysql.connector.connect(
-  host="localhost",       # endereço IP da base de dados
-  user="registration",    # nome do usuário criado
-  password="senha",       # senha para acesso à base de dados 
-  database="registration" # nome da base de dados a ser acessada
-);
-...
-config.bind = ["0.0.0.0:8000"]                   # endereço IP e porta na qual se deseja que a API opere
-config.certfile = "/path_to_yourt_quart_crt.pem" # path para o certificado SSL "quart_crt.pem"
-config.keyfile = "/path_to_yourt_quart_key.pem"  # path para chave privada da API, "quart_key.pem"
-config.ciphers = "ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-GCM-SHA256" # edição opcional, caso se deseje aumentar ou diminuir o nível de segurança
+api_id = 1234567;
+api_hash = "a12345678b9101c12d1efghijkl153d";
+mysql_host="localhost";
+mysql_user="registration";
+mysql_password="senha";
+mysql_database="registration";
+config_bind = ["0.0.0.0:8000"];
+config_certfile = "/home/caminho_para_seu_certificado/quart_crt.pem";
+config_keyfile = "/home/caminho_para_seu_certificado/quart_key.pem";
+config_ciphers = "ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-GCM-SHA256"; # edição opcional, caso se deseje aumentar ou diminuir o nível de segurança
 ```
+Feito isso, para efetivamente iniciar o chimera_identity.py, basta informar o path absoluto do diretório onde está o chimera_config.py de forma que as variáveis salvas possam ser importadas pelo script:
+
+```bash
+python3 chimera_identity.py /home/user/restante_do_path
+```
+
 ### cleaner.py
 O ```cleaner.py``` é o script de suporte responsável por acessar a base de dados e excluir todas as entradas mais antigas que cinco minutos (tempo de vida máximo de um token). É recomendável que o mesmo seja salvo no mesmo diretório que o chimera_identity.py e que sua execução seja agendada na crontab com intervalos de 1 à 4 minutos.
 
