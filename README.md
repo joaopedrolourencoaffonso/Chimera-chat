@@ -91,7 +91,7 @@ sudo cp step-ca_0.18.2/bin/step-ca /usr/bin
 ```
 
 ### 4 - Configurando a step-ca
-A documentação da Smallstep é bem completa sobre como realizar a configuração e a própria step-ca conta com um procedimento passo a passo (veja um exemplo [aqui](https://github.com/joaopedrolourencoaffonso/Chimera-chat/blob/main/instalando-step-ca.txt)). Para iniciar esse wizard, basta usar o comando:
+A [documentação da Smallstep](https://smallstep.com/docs/step-ca/installation) é bem completa sobre como realizar a configuração e a própria step-ca conta com um procedimento passo a passo (veja um exemplo [aqui](https://github.com/joaopedrolourencoaffonso/Chimera-chat/blob/main/instalando-step-ca.txt)). Para iniciar esse wizard, basta usar o comando:
 ```bash
 step ca init
 ```
