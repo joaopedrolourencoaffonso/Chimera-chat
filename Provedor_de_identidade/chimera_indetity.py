@@ -4,18 +4,21 @@
 This version is capable of supporting server errors and user mistakes, as well as storing them on a log file that can be used as database.
 '''
 
-###Path for telegram api_id and api_hash
+###Path for config file
 import sys
-sys.path.insert(2, "/home/a_user/Desktop/variables")
+sys.path.insert(2, sys.argv[1])
+
+###Path for config file
+import chimera_config
 
 ##mysql
 import mysql.connector
 
 mydb = mysql.connector.connect(
-  host="localhost",
-  user="registration",
-  password="senha",
-  database="registration"
+  host=chimera_config.mysql_host,
+  user=chimera_config.mysql_user,
+  password=chimera_config.mysql_password,
+  database=chimera_config.mysql_database
 );
 
 cur = mydb.cursor();
@@ -24,18 +27,20 @@ cur = mydb.cursor();
 from quart import Quart, render_template, jsonify, request
 import hypercorn.asyncio
 
+# Configurando Hypercorn para usar o certificado SSL, chave privada e suítes de criptografia definidas
 from hypercorn.config import Config
 config = Config()
-config.bind = ["0.0.0.0:8000"]
-config.certfile = "/home/a_user/Desktop/quart/quart_crt.pem"
-config.keyfile = "/home/a_user/Desktop/quart/quart_key.pem"
-config.ciphers = "ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-GCM-SHA256"
+config.bind = chimera_config.config_bind
+config.certfile = chimera_config.config_certfile
+config.keyfile = chimera_config.config_keyfile
+config.ciphers = chimera_config.config_ciphers
 
-
+# importando bibliotecas e constantes necessárias
 from datetime import datetime, timedelta
 from random import randint
 from os import popen
-from variables import api_id, api_hash
+api_id = chimera_config.api_id;
+api_hash = chimera_config.api_hash;
 from telethon import TelegramClient
 import json
 
@@ -45,22 +50,21 @@ log_format = "%(levelname)s ;; %(asctime)s ;; %(message)s";
 logging.basicConfig(level=logging.INFO,filename="chimera_identity.log",format=log_format);
 logger = logging.getLogger();
 
-# 1 - This segment is to simply log into telegram without an support script
-# 2 - Remember to use your own values from my.telegram.org!
+# As linhas 55-61 são apenas para fazer o login no telegram antes da efetiva inicialização
+# do servidor
 client = TelegramClient('chimera_identity', api_id, api_hash)
 
-async def myTelegram_login():
+async def chimera_login():
     await client.send_message('me', 'Starting chimera_identity.py!')
     
 with client:
-    client.loop.run_until_complete(myTelegram_login());
+    client.loop.run_until_complete(chimera_login());
 ########
 
 app = Quart(__name__)
-app.secret_key = 'senha'
 
 @app.route('/registration', methods=['POST'])
-async def registration():  
+async def registration(): 
     try:
         if request.method == 'POST':
             '''
@@ -74,7 +78,7 @@ async def registration():
             output = cur.fetchall();
             saida = len(output)
             print(output);
-            cur.execute("commit;")#without this it reads an old version of the db
+            cur.execute("commit;")
             
             if (number.isnumeric()) and saida == 0:
                 token = randint(10000, 99999);
