@@ -204,13 +204,13 @@ p2p_.join();
 ### Interface Gráfica
 Conforme explicado anteriormente, o objetivo do presente projeto é criar uma "prova de conceito" e não uma aplicação comercial, sendo assim, foi empregada uma abordagem minimalista para a implementação da mesma, conforme exposto nas figura 3 e 4:
 <p align="center">
-  <img width="600" height="300" src="https://github.com/joaopedrolourencoaffonso/Chimera-chat/blob/main/figuras_chimera/tela-de-inicio.PNG?raw=true" alt="Figura 3 - Página principal da Aplicação">
+  <img width="600" height="300" src="https://github.com/joaopedrolourencoaffonso/Chimera-chat/blob/main/figuras_chimera/tela-de-inicio.png?raw=true" alt="Figura 3 - Página principal da Aplicação">
 </p>
 <p align="center">
 	Figura 3 - Página principal da Aplicação
 </p>
 <p align="center">
-  <img width="600" height="300" src="https://github.com/joaopedrolourencoaffonso/Chimera-chat/blob/main/figuras_chimera/exemplo-de-dialogo.PNG?raw=true" alt="Figura 4 - Página de diálogo">
+  <img width="600" height="300" src="https://github.com/joaopedrolourencoaffonso/Chimera-chat/blob/main/figuras_chimera/exemplo-de-dialogo.png?raw=true" alt="Figura 4 - Página de diálogo">
 </p>
 <p align="center">
 	Figura 4 - Página de diálogo
