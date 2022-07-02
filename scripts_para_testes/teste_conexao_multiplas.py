@@ -8,11 +8,11 @@ import time
 from os import popen
 
 x1 = time.perf_counter();
-for i in range(1,100):
+for i in range(1,1000):
     time.sleep(0.2);
     txt = 'python teste_conexao_SSL.py "App 2 - ' + str(i) + '"';
     popen(txt)
     
 x2 = time.perf_counter();
 
-print(f"O processo durou {x2 - x1} segundos.\n Isso quer dizer poderia ser feito {100/(x2 - x1)} por segundo")
+print(f"O processo durou {x2 - x1} segundos.\n Isso quer dizer poderia ser feito {1000/(x2 - x1)} por segundo")
