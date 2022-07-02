@@ -27,7 +27,6 @@ cur = mydb.cursor();
 from quart import Quart, render_template, jsonify, request
 import hypercorn.asyncio
 
-# Configurando Hypercorn para usar o certificado SSL, chave privada e suítes de criptografia definidas
 from hypercorn.config import Config
 config = Config()
 config.bind = chimera_config.config_bind
@@ -35,7 +34,7 @@ config.certfile = chimera_config.config_certfile
 config.keyfile = chimera_config.config_keyfile
 config.ciphers = chimera_config.config_ciphers
 
-# importando bibliotecas e constantes necessárias
+
 from datetime import datetime, timedelta
 from random import randint
 from os import popen
@@ -50,8 +49,7 @@ log_format = "%(levelname)s ;; %(asctime)s ;; %(message)s";
 logging.basicConfig(level=logging.INFO,filename="chimera_identity.log",format=log_format);
 logger = logging.getLogger();
 
-# As linhas 55-61 são apenas para fazer o login no telegram antes da efetiva inicialização
-# do servidor
+# 1 - As linhas abaixo são apenas para fazer o login no telegram
 client = TelegramClient('chimera_identity', api_id, api_hash)
 
 async def chimera_login():
@@ -62,6 +60,7 @@ with client:
 ########
 
 app = Quart(__name__)
+#app.secret_key = 'senha'
 
 @app.route('/registration', methods=['POST'])
 async def registration(): 
@@ -85,7 +84,8 @@ async def registration():
                 print(token);
                 
                 temp_number = int(number);
-                prazo = datetime.now() + timedelta(minutes=5);
+                #prazo = datetime.now() + timedelta(minutes=5);
+                prazo = datetime.now();
                 
                 await client.send_message(temp_number, f"Bem vindo! Seu token é {token}, ele dura apenas 5 minutos.");
                 
@@ -128,10 +128,10 @@ async def send_token():
             number = number['number'];
             
             if (number.isnumeric()) and (token.isnumeric()):
-                agora = datetime.now();
+                cinco_minutos_atras = datetime.now() - timedelta(minutes=5);
                 token = int(token);
-                cur.execute(f"select * from temp_token where number = '{number}' and token = {token} and hour > '{agora}';");
-                print(f"select * from temp_token where number = '{number}' and token = {token} and hour > '{agora}';");
+                cur.execute(f"select * from temp_token where number = '{number}' and token = {token} and hour > '{cinco_minutos_atras}';");
+                print(f"select * from temp_token where number = '{number}' and token = {token} and hour > '{cinco_minutos_atras}';");
                 saida = len(cur.fetchall());
                 
                 if saida == 1:
