@@ -11,7 +11,7 @@ class false_telegram_id(Exception):
     pass
 
 '''---------------Funções usadas em todo o script---------------'''      
-def quart_module(number, controle, lock):
+def quart_module(lock, fim):
     '''Conectando as bases de dados'''
     import sqlite3;
     con = sqlite3.connect('chats.db');
@@ -39,8 +39,8 @@ def quart_module(number, controle, lock):
     async def sending(dialog_id):
         try:
             '''
-            O for abaixo é usado para pegar as últimas dez mensagens do chat.
-            No futuro, eu pretendo adicionar um botão: "ver mensagens mais antigas"
+            O for abaixo é usado para pegar as últimas dez mensagens do chat, as quais são enviadas de uma vez para a página, de forma que o usuário possa
+            ver o que está acontecendo no chat nesse momento.
             '''
             for row in reversed(cur.execute("select sent_by, msg, date from tabela_de_mensagens where dialog = ? order by rowid desc limit 10",(dialog_id,)).fetchall()):
                 name = cur3.execute(f"select name from entities where id = {row[0]}").fetchall()
@@ -99,42 +99,70 @@ def quart_module(number, controle, lock):
             while True:
                 data = await websocket.receive();
 
-                addr = cur2.execute(f"select addr from tabela_de_vizinhos where user_id = ?",(dialog_id,)).fetchall();
-                
-                x = data.find("*&%$#@!");
-                if x == 0 and addr == []:
-                    data = data.split("*&%$#@!")[1];
-                    marcador = 2;
+                '''Esse 'if' é utilizado para permitir o acesso a mensagens mais antigas.
+                   Para ver mensagens mais antigas a função olderFunction do javascript da página html envia uma string: "refresh messages123|n"
+                   onde n é um número inteiro maior que 10 utilizado para ver quão antiga a mensagem é, por exemplo, 11 significa que o usuário quer ver a décima primeira
+                   mensagem mais antiga do diálogo.'''
+                if data.find("refresh messages123") > -1:
+                    offset = int(data.split("refresh messages123|")[1]);
+                    res = cur.execute("select sent_by, msg, rowid, date from tabela_de_mensagens where dialog = ? order by rowid desc limit 1 offset ?",(dialog_id,offset)).fetchall();
                     
-                elif x != 0 and addr == []:
-                    marcador = 0;
+                    for message in res:
+                        name = cur3.execute(f"select name from entities where id = {message[0]}").fetchall();
+                        if name:
+                            name = name[0][0];
+                        else:
+                            name = "desconhecido"
+                            
+                        send_msg = "<p>" + str(name) + ": " + str(message[1]) + "</p><span class='time'>" + str(message[3]) + "</span>"
+                            
+                        await websocket.send(f"{send_msg}");
 
-                elif x == 0 and addr != []:
-                    marcador = 3;
-                
                 else:
-                    marcador = 1;
+                    '''Esse else implementa a inserção de mensagens na tabela: mensagens_para_enviar
+                   Basicamente, quando uma mensagem a ser enviada é identificada, o script verifica se o destinatário está na rede local.
+                   Se a mensagem é de texto e o destinatário não está na rede local a variável 'marcador' recebe 0, indicando que deve ser transferida pelo Telegram
+                   Se a mensagem é de texto e o destinatário     está na rede local a variável 'marcador' recebe 1, indicando que deve ser transferida por  P2P
+                 Se a mensagem é um arquivo e o destinatário não está na rede local a variável 'marcador' recebe 2, indicando que deve ser transferida pelo Telegram
+                 Se a mensagem é um arquivo e o destinatário     está na rede local a variável 'marcador' recebe 3, indicando que deve ser transferida por  P2P'''
+                    addr = cur2.execute(f"select addr from tabela_de_vizinhos where user_id = ?",(dialog_id,)).fetchall();
+                
+                    '''A string *&%$#@! é usada como um marcador indicando que a informação é o path de um arquivo a ser trasferido'''
+                    x = data.find("*&%$#@!");
+                    if x == 0 and addr == []:
+                        data = data.split("*&%$#@!")[1];
+                        marcador = 2;
+                        
+                    elif x != 0 and addr == []:
+                        marcador = 0;
 
-                while True:
-                    try:
-                        lock.acquire();
-                        cur.execute("insert into mensagens_para_enviar values (?,?,?)", (dialog_id, marcador, data))
-                        con.commit();
-                        lock.release();
-                        break;
+                    elif x == 0 and addr != []:
+                        marcador = 3;
+                    
+                    else:
+                        marcador = 1;
 
-                    except sqlite3.ProgrammingError:
-                        print(e);
-                        await asyncio.sleep(0.1);
+                    while True:
+                        try:
+                            '''Efetivamente inserindo na mensagens_para_enviar'''
+                            lock.acquire();
+                            cur.execute("insert into mensagens_para_enviar values (?,?,?)", (dialog_id, marcador, data))
+                            con.commit();
+                            lock.release();
+                            break;
 
-                    except Exception as e:
-                        print(e);#logging aqui
-                        break;
+                        except sqlite3.ProgrammingError:
+                            print(e);
+                            await asyncio.sleep(0.1);
+
+                        except Exception as e:
+                            print(e);#logging aqui
+                            break;
                 
                 ####
 
         except asyncio.CancelledError:
-            # Handle disconnection here
+            # Erro de conexão
             raise
 
         except Exception as e:
@@ -142,8 +170,7 @@ def quart_module(number, controle, lock):
             print("receiving websocket")
             raise
 
-    ''' websocket de enviar mensagens - Cada subrotina recebe o id do diálogo
-    específico e usa como base para atualizar a respectiva tabela da base de dados.'''
+    ''' websocket de enviar mensagens: Cada subrotina recebe o id do diálogo específico e usa como base para atualizar a respectiva tabela da base de dados.'''
     @app.websocket('/ws/<dialog_id>')
     async def ws(dialog_id):
         try:
@@ -153,8 +180,18 @@ def quart_module(number, controle, lock):
 
         except Exception as e:
             print("Erro websocket: ", e);
-            
-    '''conversa individual'''
+
+    '''Desligar: API que muda o valor do recurso compartilhado 'fim', indicando aos demais processos que estes devem ser finalizados'''
+    @app.route('/desligar', methods=['GET'])
+    async def desligar():
+        try:
+            fim.value = 1;
+            return await render_template('error.html', error_msg="A aplicação será encerrada em instantes.");
+
+        except:
+            return await render_template('error.html', error_msg="Houve um erro durante a finalização.");
+
+    '''conversa individual: API responsável por encontrar um usuário do Telegram e estabelecer um diálogo com o mesmo'''
     @app.route('/nova_conversa', methods=['POST'])
     async def nova_conversa():      
         try:
@@ -202,30 +239,36 @@ def quart_module(number, controle, lock):
             return await render_template('error.html', error_msg=f"Desculpe, houve um erro no servidor");
             
 
-    '''conversa individual'''
+    '''conversa individual: API responsável por fornecer páginas html capazes de estabelecer comunicação por websocket, as quais permitem comunicação em tempo real'''
     @app.route('/conversa/<dialog_id>', methods=['GET'])
     async def conversa(dialog_id):
         try:            
+            '''Pegando o nome do diálogo na base de dados'''
             dialogs = cur.execute("select name from tabela_de_dialogos where dialog_id = ?", (dialog_id,)).fetchall();
 
             if dialogs == []:
+                '''Informando que o diálogo não existe'''
                 return await render_template('error.html', error_msg="Perdão, mas esse diálogo não existe");
 
             else:
+                '''Enviando página html dinâmica com o id de usuário do Telegram e nome de usuário do Telegram'''
                 return await render_template('conversa.html', dialog_id=dialog_id, dialog_name=dialogs[0][0]);
 
         except Exception as e:
             print("===Módulo Quart===\n===conversa()===\nErro:",e);
             return await render_template('error.html', error_msg="Erro de servidor. Por favor, checar o log da aplicação para obter mais informações --> " + str(e));
 
+    '''main: Página inicial da aplicação, pode ser acessada por qualquer um dos endpoints abaixo'''
     @app.route('/')
     @app.route('/main')
     @app.route('/index')
     async def main():
         try:
             conversas = [];
+            '''Listando os ids de todos os diálogos dos quais o usuário faz parte. Esses ids são armazenados em um vetor sobre o qual o for abaixo itera, id a id'''
             dialogs = cur.execute("select distinct(dialog) from tabela_de_mensagens").fetchall();
             for row in dialogs:
+                '''Pegando a última mensagem enviada no diálogo'''
                 last_message = cur.execute("select msg from tabela_de_mensagens where dialog = ? order by rowid desc limit 1;",(row[0],)).fetchall();
 
                 if last_message:
@@ -233,21 +276,27 @@ def quart_module(number, controle, lock):
                 else:
                     last_message = "Sem mensagens"
                 
+                '''Pegando o nome do diálogo. A primeira opção é sempre ver na 'tabela_de_dialogos'.'''
                 name = cur.execute("select name from tabela_de_dialogos where dialog_id = ?",(row[0],)).fetchall();
                 if name:
                     name = name[0][0];
                 else:
+                    '''Nos casos em que o nome do diálogo não estiver na tabela, acessamos a base de dados aplicacao.session implementada pela própia biblioteca
+                       Telethon'''
                     con2 = sqlite3.connect("aplicacao.session");
                     cur2 = con2.cursor()
                     name = cur2.execute("select name from entities where id = ?",(row[0],)).fetchall();
                     con2.close();
                     
                     if name:
+                        '''Se o nome é encontrado na aplicacao.session, este é adicionado a tabela_de_dialogos'''
                         name = name[0][0];
                         cur.execute("insert into tabela_de_dialogos values (?,?)",(row[0],name))
                         con.commit()
 
                     else:
+                        '''Caso o nome não seja encontrado, significa que a própria biblioteca Telethon ainda não teve tempo de atualizar a base de dados e uma 
+                           mensagem de erro é enviada ao usuário.'''
                         name = "Desconhecido (aperte F5)"
                 
                 temp = [name, row[0], last_message]
@@ -265,8 +314,8 @@ def quart_module(number, controle, lock):
     except Exception as e:
         print("===Módulo Quart===\n===app.run()===\nErro:",e);
 
-def telethon_module(number, fim, controle, lock, my_id):
-    #base de dados
+def telethon_module(fim, lock, my_id):
+    '''base de dados'''
     import sqlite3;
     con = sqlite3.connect('chats.db');
     cur = con.cursor();
@@ -277,13 +326,17 @@ def telethon_module(number, fim, controle, lock, my_id):
 
     from os.path import abspath
 
-    #Conectando ao Telegram
+    '''Conectando ao Telegram'''
     import sys
 
     from variables import api_id, api_hash
     from telethon.events import StopPropagation
     from telethon.tl.types import UpdateDeleteMessages, UpdateEditMessage, UpdateNewMessage
 
+    '''Aqui é criado o objeto 'client' utilizado para comunicação com o telegram
+       - O campo connection_retries estabelece quantas vezes o Chimera deve tentar se reconectar com o Telegram caso haja problemas de comunicação. Utilizamos sys.maxsize
+       para estabelecer o número de tentativas como sendo o maior número possível que o sistema comporta (no caso do ambiente de testes 9223372036854775807).
+       - O campo retry_delay se refere ao tempo entre segundos para cada tentativa de reconexão'''
     client = TelegramClient('aplicacao', api_id, api_hash, connection_retries=sys.maxsize, retry_delay=10);
     ###########################
     '''Módulo de horas'''
@@ -303,9 +356,12 @@ def telethon_module(number, fim, controle, lock, my_id):
         con.commit();
         lock.release();
 
+    '''Corrotina responsável por monitorar a 'mensagens_para_enviar', é composta por um loop que verifica se há mensages ou arquivos para serem enviados pelo Telegram
+       em intervalos de 0.1 segundos'''
     async def enviar():
         while True:
             try:
+                '''Colocando as mensagens a serem enviadas em uma lista'''
                 mensagens = cur.execute("select rowid, dialog_id, marcador, msg  from mensagens_para_enviar where marcador = 0 or marcador = 2 or marcador = 4").fetchall();
 
             except(sqlite3.ProgrammingError):#Cannot operate on a closed database
@@ -328,27 +384,39 @@ def telethon_module(number, fim, controle, lock, my_id):
 
             else:            
                 try:
+                    '''Iterando sobre cada item na lista e enviado de acordo'''
                     for mensagem in mensagens:
                         if mensagem[2] == 2:
+                            '''Verificando se o path de arquivo é válido e efetivamente transferindo para o Telegram'''
                             from os.path import isfile
                             if isfile(mensagem[3]):
                                 msg = await client.send_file(mensagem[1], mensagem[3]);
                                 
                             else:
+                                '''flag utilizada para indicar que o path inserido é inválido'''
                                 is_not_file = 0;
 
                         elif mensagem[2] == 4:
+                            '''Quando o marcador é 4, não é uma mensagem a ser enviada, mas sim um pedido para iniciar um diálogo com outro usuário.
+                           A mesma tabela (mensagens_para_enviar) é utilizada para ambos os cenários como forma de dispensar a necesidade de monitorar duas tabelas ao mesmo tempo.
+                           Basicamente, o usuário fornece o número de celular da pessoa que deseja conectar e o Chimera extrai essas informações do Telegram e as armazena na chats.db
+                           de forma que a interface gráfica possa reencaminhar o usuário para o diálogo propriamente dito'''
                             try:
-                                entity = await client.get_entity(str(mensagem[1]))
+                                '''A função get_entity é utilizada para para extrair as informações do destinatário'''
+                                entity = await client.get_entity(str(mensagem[1]));#NOTA: é preciso que o número de celular esteja cadastrado na agenda do seu celular, caso contrário, não irá encontrar.
                                 entity_id = entity.id;
 
+                                '''Verificamos se o usuário já tem um diálogo com o destinatário'''
                                 query = f"select dialog_id from tabela_de_dialogos where dialog_id = {entity_id}";
                                 result = cur.execute(query).fetchall();
 
                                 if result != []:
+                                    '''Se o usuário já tem um diálogo com o destinatário, o marcador 6 é usado para indicar a interface gráfica que uma mensagem de erro deve
+                                       deve ser enviada ao cliente'''
                                     await database("update mensagens_para_enviar set marcador = 6 where rowid = ?;",(mensagem[0],));
                                     continue;
 
+                                '''Extraindo o nome de usuário do destinatário. Como nem todos usuários tem um username, as vezes é preciso usar os nomes de entidade'''
                                 if entity.username == None:
                                     if entity.first_name == None:
                                         entity_name = entity.last_name;
@@ -362,19 +430,29 @@ def telethon_module(number, fim, controle, lock, my_id):
                                 else:
                                     entity_name = entity.username;
 
+                                '''Atualizado tabela de diálogos para evitar repetição do processo'''
                                 await database("insert into tabela_de_dialogos values (?,?);",(entity_id, entity_name));
 
+                                '''Enviando informações obtidas a interface gráfica, de forma que esta possa redirecionar o usuário para a API 'conversa' para
+                                   efetivamente iniciar o diálogo'''
                                 await database("update mensagens_para_enviar set marcador = ? where rowid = ?;",(entity_id,mensagem[0]));
+
+                                '''Inserimos uma 'mensagem de início'. Dessa forma, caso a pessoa iniciei um diálogo, mas não envie uma mensagem, o diálogo será
+                                   listado na página principal de toda forma'''
+                                await database(f"insert into tabela_de_mensagens values (-1, ?, ?, ?, ?, 1)", (entity_id, my_id, '', 'Início da conversa'));
 
                             except Exception as e:
                                 print(e)
+                                '''Mensagem de erro a ser enviada ao cliente caso haja qualquer problema'''
                                 await database("update mensagens_para_enviar set marcador = 5 where rowid = ?;",(mensagem[0],));
 
                             continue;
 
                         else:
+                            '''Enviando mensagem de texto para o cliente'''
                             msg = await client.send_message(mensagem[1], mensagem[3]);
 
+                        '''Atualizando mensagens_para_enviar para evitar o envio da mesma mensagem múltiplas vezes'''
                         await database("delete from mensagens_para_enviar where rowid = ?;",(mensagem[0],))
 
                         if 'is_not_file' not in locals():
@@ -384,6 +462,7 @@ def telethon_module(number, fim, controle, lock, my_id):
                             await database("insert into tabela_de_mensagens values (?,?,?,?,?, 1)",(msg.id,mensagem[1],ME,data,mensagem_temp));
 
                         else:
+                            '''Indicando ao usuário que o arquivo não existe'''
                             print("Erro, o arquivo " + str(mensagem[3]) + " não existe")
                             del is_not_file
                         
@@ -392,9 +471,13 @@ def telethon_module(number, fim, controle, lock, my_id):
                         print("===Módulo Telethon===\n===corrotina de enviar mensagens, conexão com Telegram===\nErro:",e);
                         break;
 
+    '''Corrotina por responsável por receber eventos de mensagens do Telegram. O input: events.NewMessage indica ao Telethon que essa rotina só deve processar
+       eventos referentes a mensagens trocadas em diálogos dos quais o usuário faz parte'''
     @client.on(events.NewMessage)
     async def receber(event):
         try:
+            '''Verificado se o evento é referente a um diálogo com a característica 'is_channel' ou não. Essa distinção é importante pois diálogos
+               com essa característica podem ter milhares de usuários, os quais, por sua vez, podem compartilhar arquivos maliciosos.'''
             if not event.is_channel:
                 if hasattr(event.message.peer_id, 'chat_id'):
                     dialog = -int(event.message.peer_id.chat_id);
@@ -402,15 +485,15 @@ def telethon_module(number, fim, controle, lock, my_id):
                 else:
                     dialog = int(event.message.peer_id.user_id)
 
-                '''Pegando arquivos'''
+                '''Recebendo arquivos do Telegram'''
                 path = ""
                 if hasattr(event.media, "document"):
                     path = await client.download_media(event.media, file="arquivos_chimera/");
-                    path = abspath(path)
+                    path = abspath(path);
 
                 if hasattr(event.media, "photo"):
                     path = await client.download_media(event.media, file="imagens_chimera/")
-                    path = abspath(path)
+                    path = abspath(path);
 
                 '''Data que a mensagem foi registrada no Telegram'''
                 data = event.message.date - timedelta(hours=fuso)
@@ -432,6 +515,8 @@ def telethon_module(number, fim, controle, lock, my_id):
                 con.commit();
 
             else:
+                '''O Telegram envia mensagens referentes a supergrupos e canais com um channel_id o qual é sempre igual ao id do canal/supergrupo acrescido
+                   de '-100' no seu início.'''
                 dialog = int("-100" + str(event.message.peer_id.channel_id));
                 if event.message.sender is None:
                     from_ = dialog
@@ -439,6 +524,7 @@ def telethon_module(number, fim, controle, lock, my_id):
                 else:
                     from_ = event.message.sender.id
 
+                '''Função utilizada para processar mensagens de texto de forma a mitigar injeções SQL'''
                 entrada = chimera_library.ajuste_SQL(event.message.text);
 
                 '''Data que a mensagem foi registrada no Telegram'''
@@ -447,7 +533,7 @@ def telethon_module(number, fim, controle, lock, my_id):
 
                 if event.message.document:
                     try:
-                        #Ocasionalmente o Telegram não envia o nome do arquivo, causando uma mensagem de erro
+                        '''Ocasionalmente o Telegram não envia o nome do arquivo, causando uma mensagem de erro'''
                         try:
                             entrada = "arquivo: " + event.message.media.document.attributes[1].file_name + " - " + entrada;
 
@@ -472,6 +558,8 @@ def telethon_module(number, fim, controle, lock, my_id):
         finally:
             raise StopPropagation
 
+    '''Corrotina responsável por receber atualizações de deleção ou edição de mensagem, as classes UpdateDeleteMessages e UpdateEditMessage são importadas
+       de uma biblioteca específica do Telethon'''
     async def delete_and_edit(event):
         try:
             if isinstance(event, UpdateDeleteMessages):
@@ -511,8 +599,8 @@ def telethon_module(number, fim, controle, lock, my_id):
             con.close();
 
 
-def p2p_module(number, fim, lock, my_id):
-    #Básico para uso de sockets
+def p2p_module(fim, lock, my_id):
+    '''Importando as bibliotecas necessárias'''
     try:
         import sys
         import socket, ssl
@@ -542,6 +630,8 @@ def p2p_module(number, fim, lock, my_id):
     ca_bundle = "ca_bundle.pem";#
     private_key = f"{my_id}.pem";#
 
+    '''Essa é a thread responsável por "limpar" a base de dados de todas as entradas mais antigas que 1 minuto.
+       Ela funciona com base em um loop que verifica o valor da fim.value a cada um segundo de forma a permitir um encerramento rápido'''
     def cleaner(fim):
         try:
             while True:
@@ -569,12 +659,11 @@ def p2p_module(number, fim, lock, my_id):
             sys.exit();
 
     def enviar(fim):
-        '''Envia uma mensagem UDP para o broadcast.
-        Usamos 5 segundos por motivos de teste, mais estudo é necessário para determinar o tempo ideal.'''
+        '''Envia uma mensagem UDP (msg_aqui) para o broadcast em intervalos de 5 segundos
+           Onde msg_aqui é definida por 1:id_do_usuário'''
 
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)#
             s.bind(('', porta_e))
 
             from variables import broadcast_IP
@@ -595,8 +684,8 @@ def p2p_module(number, fim, lock, my_id):
         s.close();
 
     def receber(fim):
-        '''Cada mensagem recebida lança uma thread "receber" cujo único propósito é
-        atualizar a  base de dados.'''
+        '''É a thread responsável por receber as mensagens UDP propriamente ditas. Perceba que a 'receber' em si não edita a base de dados invés
+           disso, ela lança threads 'base_de_dados' para isso, de forma a desbloquear a função recv, permitindo recebimento contínuo de anúncios'''
         port_r = 50050;
         n = 0
         results = []
@@ -605,6 +694,8 @@ def p2p_module(number, fim, lock, my_id):
             receive_server.bind(('', port_r));
             n = 0;
             results = [];
+            '''A concurrent.futures.ThreadPoolExecutor é usada como forma de controlar o número de threads lançadas,
+               de forma a mitigar a possibilidade de um ataque DoS.'''
             with concurrent.futures.ThreadPoolExecutor(5) as executor:
                 while True:
                     data, (IP, port) = receive_server.recvfrom(1024);
@@ -637,9 +728,7 @@ def p2p_module(number, fim, lock, my_id):
 
     def base_de_dados(data, IP):
         '''
-        Essa thread compartilha a mesma base de dados, mas não a mesma conexão.
-        Eu uso um lock para controlar o acesso, então não há risco de leitura e
-        escrita simultânea. Ela é lançada a partir da thread 'receber'.
+        É a thread responsável por efetivamente atualizar a vizinhos.db, sendo um lock utilizado para evitar choques entre escrita e leitura
         '''
         try:
             con = sqlite3.connect('vizinhos.db');
@@ -652,10 +741,10 @@ def p2p_module(number, fim, lock, my_id):
                 id_telegram = cur.execute("select * from tabela_de_vizinhos where user_id = ? and addr = ?;",(data[1],IP)).fetchall();
 
                 if id_telegram == []:
-                    query = f"insert into tabela_de_vizinhos values ({data[1]}, '{datetime.now()}', '{IP}');";
+                    query = f"insert into tabela_de_vizinhos values ({data[1]}, '{datetime.now()}', '{IP}');";#inserindo entrada pela primeira vez
 
                 else:
-                    query = f"update tabela_de_vizinhos set last_seen = '{datetime.now()}' where user_id = {data[1]} and addr = '{IP}';";
+                    query = f"update tabela_de_vizinhos set last_seen = '{datetime.now()}' where user_id = {data[1]} and addr = '{IP}';";#atualizando entradas
 
                 '''escrevendo na base de dados'''
                 vizinhos.acquire();
@@ -679,9 +768,6 @@ def p2p_module(number, fim, lock, my_id):
     '''Recebe os pedidos de conexão'''
     def recebe_conexao_ssl(lock,fim):
         try:
-            from os import getcwd
-            caminho = getcwd();
-            
             sock = socket.socket();
             sock.bind(('', port_ssl));
             sock.listen(5);
@@ -696,17 +782,22 @@ def p2p_module(number, fim, lock, my_id):
 
             '''Não usamos o check_hostname pq ele é voltado para IP e acaba dando um erro'''
             context.options |= ssl.OP_NO_TLSv1 | ssl.OP_NO_TLSv1_1
-            context.set_ciphers('EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH')
+            context.set_ciphers('EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH:!SSLv3:!TLSv1')
 
             n = 0;
             results = [];
+            
             with concurrent.futures.ThreadPoolExecutor(2) as executor:
                 while fim.value == 0:
-                    ssock, addr = sock.accept();
-
-                    if n <= 10:
-                        results.append(executor.submit(recebimento_individual, ssock, context, lock,caminho))#AGENDA as threads para serem executadas
+                    #if n < 10:
+                    if n < 5:
+                        ssock, addr = sock.accept();
+                        results.append(executor.submit(recebimento_individual, ssock, context, lock))
                         n += 1;
+
+                    else:
+                        logger.error(f"Possível ataque DoS proveniente de: {addr}");
+                        sleep(7);
 
                     i = 0;
                     while i < len(results):#elimina processos não mais necessários
@@ -716,13 +807,15 @@ def p2p_module(number, fim, lock, my_id):
 
                         i += 1;
 
+            
+
         except Exception as e:
             print("===Módulo P2P===\n===thread recebe_conexao_ssl()===\nErro:",e);
             logger.error("Módulo P2P - recebe_conexao_ssl() - " + str(e));
 
 
-    '''Thread que lida com as conexões para receber mensagem individualmente'''
-    def recebimento_individual(ssock, context, lock,caminho):
+    '''Thread que lida com as conexões para receber mensagens individualmente'''
+    def recebimento_individual(ssock, context, lock):
         try:
             ssock.settimeout(2)
             conn = context.wrap_socket(ssock, server_side=True);
@@ -738,14 +831,16 @@ def p2p_module(number, fim, lock, my_id):
             podemos receber a mensagem.
             '''
             conn.write(bytes("???","utf-8"));
-            msg_recebida = conn.recv().decode('UTF-8');
+            msg_recebida = conn.recv(1024).decode('UTF-8');
             
             if msg_recebida == "klighxfrewsyhkbfa":
+                '''Criando um nome para o arquivo'''
                 file_name = datetime.now();
                 file_name = f"{file_name.year}-{file_name.month}-{file_name.day}-{file_name.hour}-{file_name.minute}-{file_name.second}"
                 conn.write(bytes("???","utf-8"));
 
-                extension = conn.recv().decode('UTF-8');
+                '''Recebendo a extensão do arquivo, isto é, o tipo de arquivo: pdf, mp4, png...'''
+                extension = conn.recv(32).decode('UTF-8');
 
                 if extension in [".jpg", ".jpeg", ".png", ".gif"]:
                     file_name = os.path.abspath(f"imagens_chimera/{file_name}{extension}")
@@ -754,6 +849,7 @@ def p2p_module(number, fim, lock, my_id):
                     file_name = os.path.abspath(f"arquivos_chimera/{file_name}{extension}")
                     
                 conn.write(bytes("???","utf-8"));
+
                 with open(file_name, "wb") as file:
                     while True:
                         bytes_read = conn.recv(4096);
@@ -773,19 +869,17 @@ def p2p_module(number, fim, lock, my_id):
                 con.close();
 
             elif msg_recebida == "":
+                '''Caso nenhuma mensagem seja recebida'''
                 conn.close();
 
             else:
-                '''
-                Checando o último id_
-                '''
                 con = sqlite3.connect('chats.db');
                 cur = con.cursor();
 
+                '''Filtrando a mensagem contra possíveis injeções SQL'''
                 msg_recebida = chimera_library.ajuste_SQL(msg_recebida);
-                '''
-                Efetivamente escrevendo na base de dados
-                '''
+
+                '''Efetivamente escrevendo na base de dados'''
                 lock.acquire();
                 cur.execute("insert into tabela_de_mensagens values (-1, ?, ?, ?, ?, 1);",(cert_name, cert_name,str(datetime.now()),msg_recebida));
                 con.commit();
@@ -804,7 +898,7 @@ def p2p_module(number, fim, lock, my_id):
         finally:
             conn.close();
 
-    '''Envio de mensagens'''
+    '''Faz o efetivo envio da mensagem'''
     def enviar_msg(lock,fim):
         '''Contém exemplos de teste. Necessário utilizar máquina virtual para teste completo'''
         con = sqlite3.connect('chats.db');
@@ -813,7 +907,7 @@ def p2p_module(number, fim, lock, my_id):
         cur2 = con2.cursor();
 
         while fim.value == 0:
-            '''SEÇÃO 1: Quase nunca dará erro'''
+            '''Funciona de maneira similar ao telethon_module, lançando uma query na base de dados a cada 0.1 segundo para ver se há uma nova mensagem a ser enviada'''
             try:
                 mensagens = cur.execute("select rowid, dialog_id, marcador, msg from mensagens_para_enviar where marcador = 1 or marcador = 3").fetchall();
                 
@@ -821,14 +915,18 @@ def p2p_module(number, fim, lock, my_id):
                     sleep(0.1);
                     
                 else:
+                    '''Criando um objeto contexto para ser utilizado durante a conexão TLS.'''
                     context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH);
-                    context.set_ciphers('EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH')
+                    
+                    '''A linha abaixo é particulamente relevante, pois ela estabelece quais protocolos serão utilizados.
+                       O conjunto de protocolos especificado são considerados seguros ou recomendados pelo site: https://ciphersuite.info/ sendo todos do TLSv1.2 ou TLSv1.3'''
+                    context.set_ciphers('EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH:!SSLv3:!TLSv1')
                     context.check_hostname = False;
                     
                     context.load_cert_chain(certfile=my_cert, keyfile=private_key)
                     context.load_verify_locations(cafile=ca_bundle);
 
-                    '''SEÇÃO 2:  Pegando o IP do destinatário'''
+                    '''Aqui é iniciado o loop que itera sobre o vetor de mensagens a enviar e estabelece, uma a uma, as conexões para transferência de informação'''
                     from os.path import isfile, splitext
                     for mensagem in mensagens:
                         if mensagem[2] == 3:
@@ -845,35 +943,40 @@ def p2p_module(number, fim, lock, my_id):
                         
                         IP_addresses = cur2.execute("select addr from tabela_de_vizinhos where user_id = ?;",(mensagem[1],)).fetchall()
 
-                        '''multiplas instancias na mesma rede'''
+                        '''Esse loop é para o caso de haver mais de uma instâcia da conta do Telegram destinatária conectadas na mesma rede
+                           Novamente, o Chimera itera uma a uma, estabelecendo as conexões individualmente'''
                         for temp in IP_addresses:
                             IP_address = temp[0];
                             
-                            sock = socket.socket(socket.AF_INET);#efetivamente cria o socket
-                            conn = context.wrap_socket(sock);    #envolve o soquete no nosso contexto especial
-                            conn.connect((IP_address, 50052));   #faz a conexão
+                            '''efetivamente cria o socket'''
+                            sock = socket.socket(socket.AF_INET);
+                            '''envolve o soquete no nosso contexto especial'''
+                            conn = context.wrap_socket(sock);
+                            '''faz a conexão'''
+                            conn.connect((IP_address, 50052));
 
                             conn.settimeout(2)
                             
                             my_IP_address = conn.getsockname()[0]
                             
-                            '''forma simples de checar se a pessoa é quem diz ser'''
+                            '''O estabelecimento de conexão confirma que o destinatário detém a chave privada relativa ao certificado apresentado
+                            Aqui, realizamos o equivalente ao 'match_hostname', verificando se o id de usuário do certificado é de fato o do destinatário'''
                             cert = conn.getpeercert(binary_form=False);
                             cert_name = cert['subjectAltName'][0][1];
                             
                             if not cert_name == str(mensagem[1]):
                                 raise false_telegram_id;
                             
-                            resposta = conn.recv();
+                            resposta = conn.recv(1024);
                             resposta = resposta.decode('UTF-8');
 
                             if resposta == "???":
                                 if mensagem[2] == 3:
                                     conn.write(bytes("klighxfrewsyhkbfa","utf-8"));
-                                    resposta = conn.recv();
+                                    resposta = conn.recv(32);
 
                                     conn.write(bytes(extension,"utf-8"));
-                                    resposta = conn.recv()
+                                    resposta = conn.recv(32)
 
                                     with open(temp_file_path, "rb") as file:
                                         while True:
@@ -891,7 +994,6 @@ def p2p_module(number, fim, lock, my_id):
                                     
                                 else:   
                                     conn.write(bytes(mensagem[3],"utf-8"))
-                                    resposta = conn.recv();
                                     conn.close();
                                     lock.acquire();
                                     cur.execute("delete from mensagens_para_enviar where rowid = ?",(mensagem[0],));
@@ -1047,6 +1149,7 @@ def p2p_module(number, fim, lock, my_id):
         sys.exit();
 
 
+
 '''INTERFACE DE LINHA DE COMANDO'''
 parser = argparse.ArgumentParser(description='Chimera, software de chat para p2p over LAN e Telegram')
 parser.add_argument('--install',action="store_true", help='Primeira Instalação do Chimera');
@@ -1083,13 +1186,17 @@ if __name__ == "__main__":
         chimera_library.write_variables();
         sys.exit();
     
+    if chimera_library.instalacao_correta() == 1:
+        print("Verifique se você realizou a instalação corretamente!")
+        sys.exit()
+
     '''Update das bases de dados antes do boot'''
     my_id = chimera_library.boot_updater();
-    #sys.exit()#<--adicionado para testes
     print('''
 Atualizando base de dados, aguarde.''');
 
     if my_id == "erro":
+        print("Ocorreu um erro durante a inicialização")
         sys.exit()
 
     '''Limpando os logs'''
@@ -1097,31 +1204,30 @@ Atualizando base de dados, aguarde.''');
     
     '''Efetivamente iniciando o cliente'''
     fim = Value('i', 0);
-    controle = Value('i', 0);
     
     '''Lock para controle da base de dados'''
     lock = Lock();
 
     '''Módulo da interface gráfica'''
-    quart_ = Process(target=quart_module, args=("1", controle, lock))
+    quart_ = Process(target=quart_module, args=(lock, fim))
 
     '''Módulo de comunicação com o Telegram'''
-    telethon_ = Process(target=telethon_module, args=("2",fim, controle, lock, my_id))
+    telethon_ = Process(target=telethon_module, args=(fim, lock, my_id))
 
     '''Módulo de comunicação P2P'''
-    p2p_ = Process(target=p2p_module, args=("3",fim, lock, str(my_id)))
+    p2p_ = Process(target=p2p_module, args=(fim, lock, str(my_id)))
 
     quart_.start();
     telethon_.start();
     p2p_.start();
 
     '''Espera o usuário decidir encerrar a aplicação'''
-    input("=============\nAperte enter para encerrar:\n=============");
-    print("=============\nEncerrando aplicação, por favor, aguarde\n=============")
-
+    from time import sleep
+    while fim.value == 0:
+        sleep(1);
+    
     quart_.kill();
-    fim.value = 1;
-
+    
     quart_.join();
     telethon_.join();
     p2p_.join();
