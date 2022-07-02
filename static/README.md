@@ -2,7 +2,7 @@
 Contém os arquivos utilizados para melhorar o visual da aplicação.
 
 ## Nota
-As figuras background-2.jpg e background-5.jpg foram obtidas do site [unsplash](https://unsplash.com/s/photos/website-background) gratuitamente e não são de minha propriedade intelectual, se deseja usá-las em seu projeto, vá ao site [unsplash](https://unsplash.com/s/photos/website-background) e leia as condições de serviço.
+As figuras background-2.jpg e background-5.jpg foram obtidas do site [unsplash](https://unsplash.com/s/photos/website-background) gratuitamente e não são de minha propriedade intelectual, se deseja usá-las em seu projeto, vá ao site [unsplash](https://unsplash.com/s/photos/website-background) e leia a licensa https://unsplash.com/license.
 
 ## Agradecimentos
 
