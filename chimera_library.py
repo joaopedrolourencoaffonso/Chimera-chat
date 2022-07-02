@@ -89,7 +89,7 @@ async def telegram_installer(client):
                 else:
                     sender_id = message.sender.id
                     
-                '''Download automatico de documentos é proíbido de supergrupos e canais, mas permitido para grupos e privados'''
+                '''Download automatico de documentos é proíbido de supergrupos e canais, mas permitido para grupos e particulares'''
                 if not message.is_channel:
                     if message.photo:
                         path = await message.download_media(file="imagens_chimera/");
@@ -335,7 +335,7 @@ async def boot_update_handler(client,cur,con):
             else:
                 sender_id = message.sender.id
 
-            '''REGRA ARBITRÁRIA: Download automatico de documentos é proíbido de supergrupos e canais, mas permitido para grupos e privados'''
+            '''Download automatico de documentos é proíbido de supergrupos e canais, mas permitido para grupos e chats particulares'''
             path = "";
             if not message.is_channel:
                 if message.photo:
