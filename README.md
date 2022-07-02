@@ -21,7 +21,16 @@ Com base nesses príncipios, apresentamos aqui o _Chimera Chat_, uma ferramenta 
 ## Filosofia e Limitações
 O principal objetivo deste projeto é servir como "proof of concept" da viabilidade de sistemas cliente-servidor híbridos com comunicação ponto-a-ponto sobre LAN sendo o Whatsapp o modelo de referência, dado que é uma das aplicações de chat [mais populares](https://www.statista.com/statistics/258749/most-popular-global-mobile-messenger-apps/) do mundo. Dessa forma, foi empregada uma atitude minimalística em relação ao design das página html utilizadas, assim como das funcionalidades oferecidas. 
 
-Uma das funcionalidades do Telegram a qual o Chimera não oferece suporte são os "canais", supergrupos do Telegram capazes de ter até 200.000 mil membros e milhões de mensagens. Tal funcionalidade, apesar de muito prática, carrega a desvantagem de não ser passível de implementação para uma aplicação cliente com bases de dados distribuídas, uma vez que seria simplesmente impraticável para um computador pessoal processar, muito menos armazenar, tantas atualizações. Sendo assim, o Chimera é capaz de suportar apenas diálogos individuais e de grupos pequenos (até 200 membros). Atualizações provenientes de outras fontes são ignoradas.
+As funcionalidades de "canais" e supergrupos, por exemplo, são implementadas de maneira parcial, sendo possível o usuário iteragir com os mesmos, porém, arquivos partilhados por esses meios não são acessíveis, uma vez que são possíves vetores de Malware. Da mesma maneira, por padrão, quando o Chimera é iniciado pela primeira vez, ele faz o download das últimas 10 mensagens trocadas em cada diálogo do Telegram, sendo mensagens anteriores **inacessíveis**, uma vez que isso não apenas tornaria o tempo de instalação desnecessariamente demorado como também tornaria extremamente difícil a iteração com canais e supergrupos, que podem trocar milhares de mensagens por dia. Sendo assim, o Chimera é capaz de:
+
+- enviar mensagens pelo Telegram e armazená-las em uma base de dados SQLite.
+- receber mensagens pelo Telegram e armazená-las em uma base de dados SQLite.
+- enviar mensagens por conexão em rede local e armazená-las em uma base de dados SQLite.
+- receber mensagens por conexão em rede local e armazená-las em uma base de dados SQLite.
+- Receber e enviar arquivos pelo Telegram, sendo que o caminho absoluto de cada arquivo armazenado na base de dados para acesso pelo usuário.
+- Receber e enviar arquivos por conexão em rede local, sendo que o caminho absoluto de cada arquivo armazenado na base de dados para acesso pelo usuário.
+- Encontrar outro usuário e começar um diálogo utilizando o número de celular registrado na agenda.
+- Fornecer uma interface gráfica para interação natural pelo usuário
 
 ## Instalação
 Dado que a comunicação ponto a ponto implementada no Chimera se baseia em certificados SSL para criptografia e autenticação, a instalação do sistema como um todo é dívida nas seguintes etapas:
