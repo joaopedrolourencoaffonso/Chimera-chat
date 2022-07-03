@@ -1,7 +1,7 @@
 '''
 nome: chimera_library.py
-data: 10/04/22
-Biblioteca com funções que uso ao longo do projeto
+data: 03/07/22
+Biblioteca com funções usadas ao longo do projeto
 '''
 
 '''---------------Meus custom errors---------------'''
