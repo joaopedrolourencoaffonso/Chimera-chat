@@ -664,6 +664,7 @@ def p2p_module(fim, lock, my_id):
 
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
             s.bind(('', porta_e))
 
             from variables import broadcast_IP
