@@ -6,7 +6,7 @@
 
     <style>
         html {
-	background:url({{ url_for('static',filename='background-5.jpg') }}) no-repeat center center fixed; 
+	background:url({{ url_for('static',filename='background-conversa.jpg') }}) no-repeat center center fixed; 
 	-webkit-background-size: cover;
 	-moz-background-size: cover;
 	-o-background-size: cover;
@@ -45,21 +45,39 @@
 	  overflow: hidden;
 	  height: 550px;
 	}
+
+	.button {
+	  background-color: #f44336; /* Red */
+	  border: none;
+	  color: white;
+	  padding: 7.5px 16px;
+	  text-align: center;
+	  text-decoration: none;
+	  display: inline-block;
+	  font-size: 10px;
+	  margin: 2px 1px;
+	  cursor: pointer;
+	  //height: 18px;
+	  //width: 100px;
+	}
     </style>
   </head>
   <body>
   <h1 style="font-size: 30px;font-family: "Serif","Garamond",monospace;">{{ dialog_name }}</h1>
 
+  <button class="button" onclick="olderFunction()">Mais antigo</button>
+
   <div id="mensagens" class="mensagens">
-     <!--<ul></ul>-->
   </div>
 
-  Mensagem: <input type="text" id="myText" value="Marco!">
+  <!--Mensagem: <input type="text" id="myText" value="Marco!" width="48" height="48">-->
+  <textarea type="text" id="myText" rows="4" cols="100" placeholder="Escreva sua mensagem aqui"></textarea>
 
-  <p>Escreva suas mensagens acima!</p>
+  <!--<p>Escreva suas mensagens acima!</p>-->
+  <br>
 
-  <button onclick="myFunction()">Enviar</button>
-  <button onclick="FileFunction()">Enviar arquivo</button>
+  <button class="button" onclick="myFunction()">Enviar</button>
+  <button class="button" onclick="FileFunction()">Enviar Arquivo</button>
 
   <p id="demo"></p>
 
@@ -87,11 +105,32 @@
         document.getElementById("demo").innerHTML = x;
     }
   };
+  
+  let flag = 1;
+  let nummessages = 10;
+
+  function olderFunction() {
+    if (flag == 1) {
+	socket.send("refresh messages123|" + nummessages);
+	flag = 2;
+	nummessages = nummessages + 1;
+    }
+    
+  }
 
   socket.onmessage = function(event) {
-    var temp = "<div class='container'>" + event.data + "</div>";
-    //var temp = event.data;
-    document.getElementById("mensagens").innerHTML += temp;
+    if (flag == 1) {
+        var temp = event.data.replace("\n","<br>")
+        var temp = "<div class='container'>" + temp + "</div>";
+        //var temp = event.data;
+        document.getElementById("mensagens").innerHTML += temp;
+    } else {
+        var temp = event.data.replace("\n","<br>")
+        var temp = "<div class='container'>" + temp + "</div>";
+        //var temp = event.data;
+        document.getElementById("mensagens").innerHTML = temp + document.getElementById("mensagens").innerHTML;
+	flag = 1;
+    }
   };
   </script>
 
