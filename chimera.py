@@ -782,7 +782,7 @@ def p2p_module(fim, lock, my_id):
 
             '''Não usamos o check_hostname pq ele é voltado para IP e acaba dando um erro'''
             context.options |= ssl.OP_NO_TLSv1 | ssl.OP_NO_TLSv1_1
-            context.set_ciphers('EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH:!SSLv3:!TLSv1')
+            context.set_ciphers('ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384')
 
             n = 0;
             results = [];
@@ -919,8 +919,8 @@ def p2p_module(fim, lock, my_id):
                     context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH);
                     
                     '''A linha abaixo é particulamente relevante, pois ela estabelece quais protocolos serão utilizados.
-                       O conjunto de protocolos especificado são considerados seguros ou recomendados pelo site: https://ciphersuite.info/ sendo todos do TLSv1.2 ou TLSv1.3'''
-                    context.set_ciphers('EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH:!SSLv3:!TLSv1')
+                       O conjunto de protocolos especificado correspondem as recomendações de segurança da Fundação Mozilla: https://ssl-config.mozilla.org/#server=nginx&version=1.17.7&config=intermediate&openssl=1.1.1k&hsts=false&guideline=5.6 , acessado em 03/07/2022'''
+                    context.set_ciphers('ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384')
                     context.check_hostname = False;
                     
                     context.load_cert_chain(certfile=my_cert, keyfile=private_key)
