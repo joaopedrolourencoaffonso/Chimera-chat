@@ -1,7 +1,7 @@
 '''
 nome: chimera_library.py
-data: 03/07/22
-Biblioteca com funções usadas ao longo do projeto
+data: 10/04/22
+Biblioteca com funções que uso ao longo do projeto
 '''
 
 '''---------------Meus custom errors---------------'''
@@ -68,6 +68,13 @@ async def telegram_installer(client):
 
         print("\n-----TABELA DE DIALOGOS INDIVIDUAIS CRIADA--------\n");
 
+        '''Criando a tabela para armazenar o valor de id do usuário. Primeiro, verificamos se a tabela já não foi criada pelo usuário
+        por meio da "novo_certificado". Caso negativo, criamos a tabela my_id'''
+        
+        if cur.execute("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='my_id';").fetchall()[0][0] == 0:
+            cur.execute("create table my_id (myid integer);")
+            con.commit();
+
         '''
         Populando as tabelas dos dialogos
         '''
@@ -79,8 +86,7 @@ async def telegram_installer(client):
             dialog_id = dialog_id[0];
 
             '''
-            - Abaixo, usamos um loop async para iterar sobre todas as mensagens dodiálogo
-            - Canais ainda estão banidos, mas eu vou aceitar supergrupos'''
+            - Abaixo, usamos um loop async para iterar sobre todas as mensagens do diálogo'''
             async for message in client.iter_messages(dialog_id, limit=10):
                 
                 if message.sender is None:
@@ -89,7 +95,7 @@ async def telegram_installer(client):
                 else:
                     sender_id = message.sender.id
                     
-                '''Download automatico de documentos é proíbido de supergrupos e canais, mas permitido para grupos e particulares'''
+                '''Download automatico de documentos é proíbido de supergrupos e canais, mas permitido para grupos e privados'''
                 if not message.is_channel:
                     if message.photo:
                         path = await message.download_media(file="imagens_chimera/");
@@ -144,7 +150,8 @@ async def telegram_installer(client):
         my_id = await client.get_me()
         my_id = my_id.id;
 
-        open("my_id.txt","w").write(str(my_id))
+        cur.execute(f"insert into my_id values ({my_id});");
+        con.commit();
             
         return "Download dos diálogos finalizados com sucesso!"
         
@@ -248,6 +255,26 @@ def verifica_certificado(my_id):
         print("=======Desculpe, mas houve um erro=======\n");
         logger.error(str(e));
 
+
+def instalacao_correta():
+    from os.path import isfile, isdir
+
+    x = 0;
+
+    if not isfile("chats.db") or not isfile("vizinhos.db"):
+        x += 1;
+
+    if not isdir("arquivos_chimera") or not isdir("imagens_chimera"):
+        x += 1;
+
+    if not isfile("aplicacao.session"):
+        x += 1;
+
+    if x == 0:
+        return 0;
+    else:
+        return 1;
+
 def boot_updater():
     try:
         #sqlite
@@ -278,14 +305,14 @@ def boot_updater():
                 cur.execute("insert into tabela_de_dialogos values (?, ?)",(dialog[0],relacao_nomes[dialog[0]]));
 
         con.commit();
-
+        
         '''=========================================='''
         with client:
             client.loop.run_until_complete(boot_update_handler(client, cur, con));
         '''=========================================='''
         '''VERIFICANDO O CERTIFICADO'''
         
-        my_id = int(open("my_id.txt","r").read())
+        my_id = cur.execute("select * from my_id where rowid = 1").fetchall()[0][0]
         resultado = verifica_certificado(my_id);
 
         return int(my_id);
@@ -335,8 +362,9 @@ async def boot_update_handler(client,cur,con):
             else:
                 sender_id = message.sender.id
 
-            '''Download automatico de documentos é proíbido de supergrupos e canais, mas permitido para grupos e chats particulares'''
+            '''REGRA ARBITRÁRIA: Download automatico de documentos é proíbido de supergrupos e canais, mas permitido para grupos e privados'''
             path = "";
+            entrada = "";
             if not message.is_channel:
                 if message.photo:
                     path = await message.download_media(file="imagens_chimera/");
@@ -356,7 +384,8 @@ async def boot_update_handler(client,cur,con):
                     entrada = message.text;
 
             else:
-                entrada = message.text;
+                if message.text:
+                    entrada = message.text;
 
                 if message.document:
                     try:
@@ -378,11 +407,12 @@ async def boot_update_handler(client,cur,con):
                     entrada = "foto: photo_" + str(message.date) + " - " + entrada;
 
 
-            data = message.date - timedelta(hours=fuso)
-            data = str(data)
+            if entrada != "":
+                data = message.date - timedelta(hours=fuso)
+                data = str(data)
 
-            cur.execute("INSERT INTO tabela_de_mensagens (id_telegram, dialog, sent_by, date, msg, sent_) VALUES (?,?,?,?,?,?)", (int(message.id), int(dialog_id), int(sender_id), data, entrada, 0));
-            con.commit();
+                cur.execute("INSERT INTO tabela_de_mensagens (id_telegram, dialog, sent_by, date, msg, sent_) VALUES (?,?,?,?,?,?)", (int(message.id), int(dialog_id), int(sender_id), data, entrada, 0));
+                con.commit();
     
     
 
@@ -392,7 +422,6 @@ async def delete_and_edit(event):
     con = sqlite3.connect('chats.db');
     cur = con.cursor();
 
-    #print(event)
     lock.acquire();
     try:
         if isinstance(event, UpdateDeleteMessages):
@@ -426,9 +455,7 @@ def primeira_instalacao():
         from os import mkdir, remove
         from os.path import isfile, isdir
 
-        '''
-        Criando diretórios e bases de dados para armazenamento de arquivos
-        '''
+        '''Criando diretórios e bases de dados para armazenamento de arquivos'''
         
         if not isdir("imagens_chimera"):
             mkdir("imagens_chimera");
@@ -489,17 +516,27 @@ def novo_certificado():
         #Outros módulos
         from time import sleep
         from os import popen
+        import sqlite3#
+        con = sqlite3.connect("chats.db")#
+        cur = con.cursor()#
 
         from variables import registration_IP, step_ca_IP
         [IP, Port] = registration_IP.split(":")
 
+        if cur.execute("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='my_id';").fetchall()[0][0] == 0:
+            cur.execute("create table my_id (myid integer);")
+            con.commit();
+
         '''Pegando id do Telegram'''
         try:
-            number = int(open("my_id.txt","r").read())
+            number = cur.execute("select * from my_id where rowid = 1").fetchall()[0][0]
 
         except:
             number = login_inicial();
-            open("my_id.txt","w").write(str(number))
+            cur.execute(f"insert into my_id values ({number});")
+            con.commit()
+
+        con.close()
         '''
         ----------------------------------------
         Obtendo certificados da step-ca
@@ -538,19 +575,15 @@ def novo_certificado():
                 return "Server error";
 
             comand = f"openssl genrsa -out {number}.pem 4096"
-            popen(comand);
+            temp = popen(comand).read();
             '''
             Os sleeps são usados para dar tempo ao openssl de gerar o certificado
             '''
             print("======\nPrivate Key generated\n======");
 
-            sleep(5);
-
             comand = 'openssl req -new -key {number}.pem -out {number}.csr -subj "/C=BR/ST=RJ/L=Niteroi/O=UFF/OU=TCC/CN={number}"';
             comand = comand.replace("{number}", str(number));
-            popen(comand);
-
-            sleep(5);
+            temp = popen(comand).read();
 
             file = open(f"{number}.csr", "r");
             csr = file.read();
@@ -605,13 +638,17 @@ def renovar_certificado():
         #comunicação
         import requests
         import json
+        import sqlite3#
+        con = sqlite3.connect("chats.db")#
+        cur = con.cursor()#
 
         from variables import step_ca_IP
         [IP, Port] = step_ca_IP.split(":")
         
         print("Iniciando: renovar_certificado");
         '''Pegando o id do Telegram'''
-        number = int(open("my_id.txt","r").read())
+        number = cur.execute("select * from my_id where rowid = 1").fetchall()[0][0]
+        con.close()
 
         url = f"https://{IP}:{Port}/1.0/renew";
 
@@ -642,9 +679,12 @@ def revogar_certificado():
         import json
         #Outros módulos
         from os import popen
-
-        number = int(open("my_id.txt","r").read())
-        #print(number)
+        import sqlite3#
+        con = sqlite3.connect("chats.db")#
+        cur = con.cursor()#
+        
+        number = cur.execute("select * from my_id where rowid = 1").fetchall()[0][0]
+        con.close();
 
         from variables import step_ca_IP, registration_IP
 
