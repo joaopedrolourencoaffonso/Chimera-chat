@@ -474,7 +474,6 @@ def primeira_instalacao():
         cur = con.cursor();
 
         cur.execute("CREATE TABLE tabela_de_dialogos (dialog_id integer, name text)");
-        cur.execute("CREATE TABLE tabela_de_grupos (group_id integer, user_id integer, name text)");
         cur.execute("CREATE TABLE mensagens_para_enviar (dialog_id integer, marcador integer, msg text)");
         cur.execute("CREATE TABLE tabela_de_mensagens (id_telegram integer, dialog integer, sent_by integer, date text, msg text, sent_ integer)");
         con.commit();
