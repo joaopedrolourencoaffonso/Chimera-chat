@@ -212,7 +212,7 @@ def cert_updater():
     try:
         import requests, json
         
-        url = "https://192.168.0.155:8443/1.0/renew";
+        url = "https://" + chimera_config.CA_address + "/1.0/renew";
         
         response = requests.post(url, verify="ca_bundle.pem", cert=("quart_crt.pem","quart_key.pem"));
         response = json.loads(response.text);
