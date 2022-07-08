@@ -60,6 +60,7 @@ config_bind = ["0.0.0.0:8000"];
 config_certfile = "/home/caminho_para_seu_certificado/quart_crt.pem";
 config_keyfile = "/home/caminho_para_seu_certificado/quart_key.pem";
 config_ciphers = "ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-GCM-SHA256"; # edição opcional, caso se deseje aumentar ou diminuir o nível de segurança
+CA_address = "192.168.0.155:8443";
 ```
 Feito isso, para efetivamente iniciar o chimera_identity.py, basta informar o path absoluto do diretório onde está o chimera_config.py de forma que as variáveis salvas possam ser importadas pelo script:
 
