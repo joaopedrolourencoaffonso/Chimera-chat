@@ -192,7 +192,7 @@ quart_.join();
 telethon_.join();
 p2p_.join();
 ```
-É importante notar que esses módulos não trocam informações diretamente, mas sim, por intermédio de duas bases de dados: ```vizinhos.db``` e ```chats.db```, conforme a figura 2:
+É importante notar que esses módulos não trocam informações diretamente, mas sim, por intermédio de duas bases de dados: ```vizinhos.db``` e ```chats.db``` e do recurso compartilhado ```fim```, conforme a figura 2:
 
 <p align="center">
   <img width="600" height="300" src="https://github.com/joaopedrolourencoaffonso/Chimera-chat/blob/main/figuras_chimera/funcionamento-geral.png?raw=true" alt="Figura 2 - Esquema de interação entre os diferentes processos e bases de dados.">
