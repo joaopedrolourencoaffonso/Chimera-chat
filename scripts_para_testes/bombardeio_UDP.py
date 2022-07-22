@@ -19,7 +19,7 @@ def main():
         s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)#
         s.bind(('', porta_e))
         x1 = perf_counter()
-        while msg_aqui < 1000:
+        while msg_aqui < 10000:
             msg_aqui += 1
             bytesToSend = str.encode("1:" + str(msg_aqui));
             print(msg_aqui)
@@ -27,7 +27,7 @@ def main():
 
         x2 = perf_counter()
         print(x2 - x1, " segundos")
-        print(1000/(x2 - x1)," mensagens por segundo")
+        print(10000/(x2 - x1)," mensagens por segundo")
                 
 
     except Exception as e:
