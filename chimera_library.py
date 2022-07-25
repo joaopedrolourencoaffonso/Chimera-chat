@@ -86,7 +86,7 @@ async def telegram_installer(client):
             dialog_id = dialog_id[0];
 
             '''
-            - Abaixo, usamos um loop async para iterar sobre todas as mensagens do diálogo'''
+            - Abaixo, usamos um loop async para iterar sobre as mensagens do diálogo'''
             async for message in client.iter_messages(dialog_id, limit=10):
                 
                 if message.sender is None:
