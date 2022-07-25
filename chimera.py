@@ -790,8 +790,7 @@ def p2p_module(fim, lock, my_id):
             
             with concurrent.futures.ThreadPoolExecutor(2) as executor:
                 while fim.value == 0:
-                    #if n < 10:
-                    if n < 5:
+                    if n < 10:
                         ssock, addr = sock.accept();
                         results.append(executor.submit(recebimento_individual, ssock, context, lock))
                         n += 1;
