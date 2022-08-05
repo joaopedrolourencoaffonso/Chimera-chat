@@ -14,7 +14,7 @@ client = TelegramClient('aplicacao', api_id, api_hash)
 
 async def main():
     i = 0;
-    while i < 100:
+    while i < 200:
         await client.send_message("me", f'Mensagem {i}')
         i += 1;
 
