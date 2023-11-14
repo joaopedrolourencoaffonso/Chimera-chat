@@ -4,4 +4,4 @@ quart==0.16.3
 Telethon==1.24.0
 cryptg==0.2.post4
 urllib3>=1.26.18
-pip==22.0.3
+pip==23.3
